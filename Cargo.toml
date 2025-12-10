@@ -1,0 +1,8 @@
+[package]
+name = "finance_cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ifch = "0.1.0"
+clap = "4.0"
