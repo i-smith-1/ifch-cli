@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 ifch = "0.1.0"
 clap = "4.0"
+colored = "2.0"
