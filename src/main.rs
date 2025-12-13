@@ -2,12 +2,69 @@ use clap::{Arg, Command};
 use std::io::{self, Write};
 use std::process::Command as ProcessCommand;
 use ifch::*;
+use std::sync::Mutex;
+use once_cell::sync::Lazy;
+
+// Define global variables using once_cell
+static LAST_RESULT: Lazy<Mutex<String>> = Lazy::new(|| Mutex::new(String::new()));
+static HISTORY: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
+
+// Helper Functions
+
+fn clear_terminal() {
+    if cfg!(target_os = "windows") {
+        ProcessCommand::new("cmd")
+            .args(&["/C", "cls"])
+            .status()
+            .unwrap();
+    } else {
+        ProcessCommand::new("clear")
+            .status()
+            .unwrap();
+    }
+}
+
+fn display_ascii_art() {
+    println!(
+        r#"
+ _________ _______  _______          
+\__   __/(  ____ \(  ____ \|\     /|
+   ) (   | (    \/| (    \/| )   ( |
+   | |   | (__    | |      | (___) |
+   | |   |  __)   | |      |  ___  |
+   | |   | (      | |      | (   ) |
+___) (___| )      | (____/\| )   ( |
+\_______/|/       (_______/|/     \|
+                                    
+        "#
+    );
+    println!("Welcome to IFCH - Iain's Financial Calculation Helper");
+    let last_result = LAST_RESULT.lock().unwrap();
+    println!("{: >60}", *last_result);
+}
+
+fn get_user_input() -> String {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    input
+}
+
+// Function to display history
+fn display_history() {
+    clear_terminal();
+    display_ascii_art();
+    println!("\nHistory of Results:");
+    let history = HISTORY.lock().unwrap();
+    for result in history.iter() {
+        println!("{}", result);
+    }
+    println!("\nPress Enter to return to the main menu...");
+    let _ = get_user_input();
+}
 
 fn main() {
     clear_terminal();
     display_ascii_art();
-    println!("Welcome to IFCH - Iain's Financial Calculation Helper");
-
     loop {
         main_menu();
         let choice = get_user_input();
@@ -19,6 +76,7 @@ fn main() {
             "4" => wacc_menu(),
             "5" => valuation_menu(),
             "6" => options_menu(),
+            "H" | "h" => display_history(),
             "q" => break,
             _ => println!("Invalid option, please try again."),
         }
@@ -26,6 +84,8 @@ fn main() {
 }
 
 fn main_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nMain Menu:");
     println!("1. Ratios");
     println!("2. Time Value of Money");
@@ -33,6 +93,8 @@ fn main_menu() {
     println!("4. WACC");
     println!("5. Valuation");
     println!("6. Options");
+    println!("--------------");
+    println!("h. History");
     println!("q. Quit");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
@@ -40,13 +102,17 @@ fn main_menu() {
 
 
 fn ratios_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nRatios Menu:");
     println!("1. Liquidity Ratios");
     println!("2. Profitability Ratios");
     println!("3. Leverage Ratios");
     println!("4. Activity Ratios");
     println!("5. Valuation Ratios");
-    println!("q. Back to Main Menu");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
@@ -57,17 +123,23 @@ fn ratios_menu() {
         "3" => leverage_ratios_menu(),
         "4" => activity_ratios_menu(),
         "5" => valuation_ratios_menu(),
-        "q" => return,
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
 
 fn liquidity_ratios_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nLiquidity Ratios Menu:");
     println!("1. Quick Ratio");
     println!("2. Acid Test Ratio");
     println!("3. Cash Ratio");
-    println!("q. Back to Ratios Menu");
+    println!("4. Current Ratio");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
@@ -76,7 +148,9 @@ fn liquidity_ratios_menu() {
         "1" => run_quick_ratio(),
         "2" => run_acid_test_ratio(),
         "3" => run_cash_ratio(),
-        "q" => return,
+        "4" => run_current_ratio(),
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
@@ -91,7 +165,13 @@ fn run_quick_ratio() {
 
     let ratio = quick_r(current_assets, inventory, current_liabilities);
     println!("Quick Ratio: {:.2}", ratio);
+    {
+        let result = format!("Quick Ratio = {:.2}", ratio);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
+
 
 fn run_acid_test_ratio() {
     println!("Enter cash: ");
@@ -105,6 +185,9 @@ fn run_acid_test_ratio() {
 
     let ratio = acid_r(cash, inventory, accounts_receivable, current_liabilities);
     println!("Acid Test Ratio: {:.2}", ratio);
+    // Update the last result
+    let mut last_result = LAST_RESULT.lock().unwrap();
+    *last_result = format!("Last: Acid Test Ratio = {:.2}", ratio);
 }
 
 fn run_cash_ratio() {
@@ -115,16 +198,37 @@ fn run_cash_ratio() {
 
     let ratio = cash_r(cash_and_equivalents, current_liabilities);
     println!("Cash Ratio: {:.2}", ratio);
+    // Update the last result
+    let mut last_result = LAST_RESULT.lock().unwrap();
+     *last_result = format!("Last: Cash Ratio = {:.2}", ratio);
 }
 
+fn run_current_ratio() {
+    println!("Enter current assets: ");
+    let current_assets = get_user_input().trim().parse::<f64>().unwrap();
+    println!("Enter current liabilities: ");
+    let current_liabilities = get_user_input().trim().parse::<f64>().unwrap();
+
+    let ratio = current_r(current_assets, current_liabilities);
+    println!("Current Ratio: {:.2}", ratio);
+    // Update the last result
+    let mut last_result = LAST_RESULT.lock().unwrap();
+     *last_result = format!("Last: Current Ratio = {:.2}", ratio);
+}
+
+
 fn profitability_ratios_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nProfitability Ratios Menu:");
     println!("1. Gross Margin");
     println!("2. Operating Margin");
     println!("3. Net Margin");
     println!("4. Return on Assets (ROA)");
     println!("5. Return on Equity (ROE)");
-    println!("q. Back to Ratios Menu");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
@@ -135,7 +239,8 @@ fn profitability_ratios_menu() {
         "3" => run_net_margin(),
         "4" => run_return_on_assets(),
         "5" => run_return_on_equity(),
-        "q" => return,
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
@@ -148,6 +253,9 @@ fn run_gross_margin() {
 
     let margin = gross_m(gross_profit, revenue);
     println!("Gross Margin: {:.2}", margin);
+    // Update the last result
+    let mut last_result = LAST_RESULT.lock().unwrap();
+     *last_result = format!("Last: Gross Margin = {:.2}", margin);
 }
 
 fn run_operating_margin() {
@@ -158,6 +266,9 @@ fn run_operating_margin() {
 
     let margin = operating_m(operating_income, revenue);
     println!("Operating Margin: {:.2}", margin);
+    // Update the last result
+    let mut last_result = LAST_RESULT.lock().unwrap();
+     *last_result = format!("Last: Operating Margin = {:.2}", margin);
 }
 
 fn run_net_margin() {
@@ -168,8 +279,10 @@ fn run_net_margin() {
 
     let margin = net_m(net_income, revenue);
     println!("Net Margin: {:.2}", margin);
+    // Update the last result
+    let mut last_result = LAST_RESULT.lock().unwrap();
+     *last_result = format!("Last: Net Margin = {:.2}", margin);
 }
-
 fn run_return_on_assets() {
     println!("Enter net income: ");
     let net_income = get_user_input().trim().parse::<f64>().unwrap();
@@ -178,8 +291,10 @@ fn run_return_on_assets() {
 
     let roa = r_o_a(net_income, total_assets);
     println!("Return on Assets (ROA): {:.2}", roa);
+    // Update the last result
+    let mut last_result = LAST_RESULT.lock().unwrap();
+     *last_result = format!("Last: ROA = {:.2}", roa);
 }
-
 fn run_return_on_equity() {
     println!("Enter net income: ");
     let net_income = get_user_input().trim().parse::<f64>().unwrap();
@@ -188,14 +303,20 @@ fn run_return_on_equity() {
 
     let roe = r_o_e(net_income, shareholders_equity);
     println!("Return on Equity (ROE): {:.2}", roe);
+    // Update the last result
+    let mut last_result = LAST_RESULT.lock().unwrap();
+     *last_result = format!("Last: ROE = {:.2}", roe);
 }
-
 fn leverage_ratios_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nLeverage Ratios Menu:");
     println!("1. Debt to Equity Ratio");
     println!("2. Debt Ratio");
     println!("3. EBIT Interest Coverage Ratio");
-    println!("q. Back to Ratios Menu");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
@@ -204,7 +325,8 @@ fn leverage_ratios_menu() {
         "1" => run_debt_to_equity_ratio(),
         "2" => run_debt_ratio(),
         "3" => run_ebit_interest_coverage(),
-        "q" => return,
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
@@ -240,11 +362,15 @@ fn run_ebit_interest_coverage() {
 }
 
 fn activity_ratios_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nActivity Ratios Menu:");
     println!("1. Inventory Turnover");
     println!("2. Receivables Turnover");
     println!("3. Asset Turnover");
-    println!("q. Back to Ratios Menu");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
@@ -253,7 +379,8 @@ fn activity_ratios_menu() {
         "1" => run_inventory_turnover(),
         "2" => run_receivables_turnover(),
         "3" => run_asset_turnover(),
-        "q" => return,
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
@@ -289,11 +416,15 @@ fn run_asset_turnover() {
 }
 
 fn valuation_ratios_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nValuation Ratios Menu:");
     println!("1. Price to Earnings (P/E) Ratio");
     println!("2. Price to Book (P/B) Ratio");
     println!("3. Dividend Yield");
-    println!("q. Back to Ratios Menu");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
@@ -302,7 +433,8 @@ fn valuation_ratios_menu() {
         "1" => run_price_to_earnings_ratio(),
         "2" => run_price_to_book_ratio(),
         "3" => run_dividend_yield(),
-        "q" => return,
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
@@ -338,25 +470,64 @@ fn run_dividend_yield() {
 }
 
 fn options_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nOptions Menu:");
     println!("1. Black-Scholes-Merton");
-    println!("q. Back to Main Menu");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
     let choice = get_user_input();
     match choice.trim() {
         "1" => run_bsm(),
-        "q" => return,
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
 
+fn run_bsm() {
+    println!("Enter stock price: ");
+    let stock_price = get_user_input().trim().parse::<f64>().unwrap();
+    println!("Enter strike price: ");
+    let strike_price = get_user_input().trim().parse::<f64>().unwrap();
+    println!("Enter time to expiration (years): ");
+    let time_to_expiration = get_user_input().trim().parse::<f64>().unwrap();
+    println!("Enter risk-free rate: ");
+    let risk_free_rate = get_user_input().trim().parse::<f64>().unwrap();
+    println!("Enter volatility: ");
+    let volatility = get_user_input().trim().parse::<f64>().unwrap();
+    println!("Enter dividend yield: ");
+    let dividend_yield = get_user_input().trim().parse::<f64>().unwrap();
+
+    let (call_price, put_price, nd1, nd2) = bsm(
+        stock_price,
+        strike_price,
+        time_to_expiration,
+        risk_free_rate,
+        volatility,
+        dividend_yield,
+    );
+
+    println!("Call Price: {:.2}", call_price);
+    println!("Put Price: {:.2}", put_price);
+    println!("N(d1): {:.2}", nd1);
+    println!("N(d2): {:.2}", nd2);
+}
+
+
 fn time_value_of_money_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nTime Value of Money Menu:");
     println!("1. Calculate XNPV");
     println!("2. Calculate XIRR");
-    println!("q. Back to Main Menu");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
@@ -364,7 +535,8 @@ fn time_value_of_money_menu() {
     match choice.trim() {
         "1" => run_xnpv(),
         "2" => run_xirr(),
-        "q" => return,
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
@@ -411,12 +583,16 @@ fn get_cashflows() -> Vec<(f64, String)> {
 
 
 fn build_ups_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nBuild Ups Menu:");
     println!("1. FCFF using Net Income");
     println!("2. FCFF using CFO");
     println!("3. FCFF using EBIT");
     println!("4. FCFF using EBITDA");
-    println!("q. Back to Main Menu");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
@@ -426,7 +602,8 @@ fn build_ups_menu() {
         "2" => run_fcff_cfo(),
         "3" => run_fcff_ebit(),
         "4" => run_fcff_ebitda(),
-        "q" => return,
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
@@ -497,6 +674,8 @@ fn run_fcff_ebitda() {
 
 
 fn wacc_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nWACC Menu:");
     println!("1. Calculate WACC using Cost of Equity");
     println!("2. Calculate Cost of Equity (COE)");
@@ -504,7 +683,9 @@ fn wacc_menu() {
     println!("4. Calculate Market Risk Premium (MRP)");
     println!("5. Calculate Equity Beta");
     println!("6. Calculate Asset Beta");
-    println!("q. Back to Main Menu");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
@@ -516,7 +697,8 @@ fn wacc_menu() {
         "4" => run_mrp(),
         "5" => run_equity_beta(),
         "6" => run_asset_beta(),
-        "q" => return,
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
@@ -616,10 +798,14 @@ fn run_asset_beta() {
 }
 
 fn valuation_menu() {
+    clear_terminal();
+    display_ascii_art();
     println!("\nValuation Models Menu:");
     println!("1. Gordon Growth Model - One Phase");
     println!("2. Gordon Growth Model - Two Phase");
-    println!("q. Back to Main Menu");
+    println!("--------------");
+    println!("h. History");
+    println!("b. Back to Main Menu");
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 
@@ -627,7 +813,8 @@ fn valuation_menu() {
     match choice.trim() {
         "1" => run_ggm_p1(),
         "2" => run_ggm_p2(),
-        "q" => return,
+        "H" | "h" => display_history(),
+        "b" => return,
         _ => println!("Invalid option, please try again."),
     }
 }
@@ -664,78 +851,4 @@ fn run_ggm_p2() {
     }
 }
 
-
-fn clear_terminal() {
-    if cfg!(target_os = "windows") {
-        ProcessCommand::new("cmd")
-            .args(&["/C", "cls"])
-            .status()
-            .unwrap();
-    } else {
-        ProcessCommand::new("clear")
-            .status()
-            .unwrap();
-    }
-}
-
-fn display_ascii_art() {
-    println!(
-        r#"
- _________ _______  _______          
-\__   __/(  ____ \(  ____ \|\     /|
-   ) (   | (    \/| (    \/| )   ( |
-   | |   | (__    | |      | (___) |
-   | |   |  __)   | |      |  ___  |
-   | |   | (      | |      | (   ) |
-___) (___| )      | (____/\| )   ( |
-\_______/|/       (_______/|/     \|
-                                    
-        "#
-    );
-}
-
-fn get_user_input() -> String {
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).unwrap();
-    input
-}
-
-fn run_current_ratio() {
-    println!("Enter current assets: ");
-    let current_assets = get_user_input().trim().parse::<f64>().unwrap();
-    println!("Enter current liabilities: ");
-    let current_liabilities = get_user_input().trim().parse::<f64>().unwrap();
-
-    let ratio = current_r(current_assets, current_liabilities);
-    println!("Current Ratio: {:.2}", ratio);
-}
-
-fn run_bsm() {
-    println!("Enter stock price: ");
-    let stock_price = get_user_input().trim().parse::<f64>().unwrap();
-    println!("Enter strike price: ");
-    let strike_price = get_user_input().trim().parse::<f64>().unwrap();
-    println!("Enter time to expiration (years): ");
-    let time_to_expiration = get_user_input().trim().parse::<f64>().unwrap();
-    println!("Enter risk-free rate: ");
-    let risk_free_rate = get_user_input().trim().parse::<f64>().unwrap();
-    println!("Enter volatility: ");
-    let volatility = get_user_input().trim().parse::<f64>().unwrap();
-    println!("Enter dividend yield: ");
-    let dividend_yield = get_user_input().trim().parse::<f64>().unwrap();
-
-    let (call_price, put_price, nd1, nd2) = bsm(
-        stock_price,
-        strike_price,
-        time_to_expiration,
-        risk_free_rate,
-        volatility,
-        dividend_yield,
-    );
-
-    println!("Call Price: {:.2}", call_price);
-    println!("Put Price: {:.2}", put_price);
-    println!("N(d1): {:.2}", nd1);
-    println!("N(d2): {:.2}", nd2);
-}
-
+// end of file
