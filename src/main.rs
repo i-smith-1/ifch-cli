@@ -62,6 +62,8 @@ fn display_history() {
     let _ = get_user_input();
 }
 
+// Main part of the file
+
 fn main() {
     clear_terminal();
     display_ascii_art();
@@ -99,7 +101,6 @@ fn main_menu() {
     print!("Enter your choice: ");
     io::stdout().flush().unwrap();
 }
-
 
 fn ratios_menu() {
     clear_terminal();
@@ -172,7 +173,6 @@ fn run_quick_ratio() {
     }
 }
 
-
 fn run_acid_test_ratio() {
     println!("Enter cash: ");
     let cash = get_user_input().trim().parse::<f64>().unwrap();
@@ -185,9 +185,11 @@ fn run_acid_test_ratio() {
 
     let ratio = acid_r(cash, inventory, accounts_receivable, current_liabilities);
     println!("Acid Test Ratio: {:.2}", ratio);
-    // Update the last result
-    let mut last_result = LAST_RESULT.lock().unwrap();
-    *last_result = format!("Last: Acid Test Ratio = {:.2}", ratio);
+    {
+        let result = format!("Acid Test Ratio = {:.2}", ratio);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_cash_ratio() {
@@ -198,9 +200,11 @@ fn run_cash_ratio() {
 
     let ratio = cash_r(cash_and_equivalents, current_liabilities);
     println!("Cash Ratio: {:.2}", ratio);
-    // Update the last result
-    let mut last_result = LAST_RESULT.lock().unwrap();
-     *last_result = format!("Last: Cash Ratio = {:.2}", ratio);
+    {
+        let result = format!("Cash Ratio = {:.2}", ratio);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_current_ratio() {
@@ -211,11 +215,12 @@ fn run_current_ratio() {
 
     let ratio = current_r(current_assets, current_liabilities);
     println!("Current Ratio: {:.2}", ratio);
-    // Update the last result
-    let mut last_result = LAST_RESULT.lock().unwrap();
-     *last_result = format!("Last: Current Ratio = {:.2}", ratio);
+    {
+        let result = format!("Current Ratio = {:.2}", ratio);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
-
 
 fn profitability_ratios_menu() {
     clear_terminal();
@@ -253,9 +258,11 @@ fn run_gross_margin() {
 
     let margin = gross_m(gross_profit, revenue);
     println!("Gross Margin: {:.2}", margin);
-    // Update the last result
-    let mut last_result = LAST_RESULT.lock().unwrap();
-     *last_result = format!("Last: Gross Margin = {:.2}", margin);
+    {
+        let result = format!("Gross Margin = {:.2}", margin);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_operating_margin() {
@@ -266,9 +273,11 @@ fn run_operating_margin() {
 
     let margin = operating_m(operating_income, revenue);
     println!("Operating Margin: {:.2}", margin);
-    // Update the last result
-    let mut last_result = LAST_RESULT.lock().unwrap();
-     *last_result = format!("Last: Operating Margin = {:.2}", margin);
+    {
+        let result = format!("Operating Margin = {:.2}", margin);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_net_margin() {
@@ -279,10 +288,13 @@ fn run_net_margin() {
 
     let margin = net_m(net_income, revenue);
     println!("Net Margin: {:.2}", margin);
-    // Update the last result
-    let mut last_result = LAST_RESULT.lock().unwrap();
-     *last_result = format!("Last: Net Margin = {:.2}", margin);
+    {
+        let result = format!("Net Margin = {:.2}", margin);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
+
 fn run_return_on_assets() {
     println!("Enter net income: ");
     let net_income = get_user_input().trim().parse::<f64>().unwrap();
@@ -291,10 +303,13 @@ fn run_return_on_assets() {
 
     let roa = r_o_a(net_income, total_assets);
     println!("Return on Assets (ROA): {:.2}", roa);
-    // Update the last result
-    let mut last_result = LAST_RESULT.lock().unwrap();
-     *last_result = format!("Last: ROA = {:.2}", roa);
+    {
+        let result = format!("ROA = {:.2}", roa);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
+
 fn run_return_on_equity() {
     println!("Enter net income: ");
     let net_income = get_user_input().trim().parse::<f64>().unwrap();
@@ -303,10 +318,13 @@ fn run_return_on_equity() {
 
     let roe = r_o_e(net_income, shareholders_equity);
     println!("Return on Equity (ROE): {:.2}", roe);
-    // Update the last result
-    let mut last_result = LAST_RESULT.lock().unwrap();
-     *last_result = format!("Last: ROE = {:.2}", roe);
+    {
+        let result = format!("ROE = {:.2}", roe);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
+
 fn leverage_ratios_menu() {
     clear_terminal();
     display_ascii_art();
@@ -339,6 +357,11 @@ fn run_debt_to_equity_ratio() {
 
     let dte = d_t_e(total_debt, shareholders_equity);
     println!("Debt to Equity Ratio: {:.2}", dte);
+    {
+        let result = format!("Debt to Equity Ratio = {:.2}", dte);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_debt_ratio() {
@@ -349,6 +372,11 @@ fn run_debt_ratio() {
 
     let dr = d_r(total_debt, total_assets);
     println!("Debt Ratio: {:.2}", dr);
+    {
+        let result = format!("Debt Ratio = {:.2}", dr);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_ebit_interest_coverage() {
@@ -359,6 +387,11 @@ fn run_ebit_interest_coverage() {
 
     let ebit_ic = ebit_i_c(ebit, interest_expense);
     println!("EBIT Interest Coverage Ratio: {:.2}", ebit_ic);
+    {
+        let result = format!("EBIT Interest Coverage Ratio = {:.2}", ebit_ic);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn activity_ratios_menu() {
@@ -393,6 +426,11 @@ fn run_inventory_turnover() {
 
     let inv_turnover = inv_t(cost_of_goods_sold, average_inventory);
     println!("Inventory Turnover: {:.2}", inv_turnover);
+    {
+        let result = format!("Inventory Turnover = {:.2}", inv_turnover);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_receivables_turnover() {
@@ -403,6 +441,11 @@ fn run_receivables_turnover() {
 
     let rec_turnover = rec_t(revenue, average_accounts_receivable);
     println!("Receivables Turnover: {:.2}", rec_turnover);
+    {
+        let result = format!("Receivables Turnover = {:.2}", rec_turnover);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_asset_turnover() {
@@ -413,6 +456,11 @@ fn run_asset_turnover() {
 
     let asset_turnover = a_t(revenue, total_assets);
     println!("Asset Turnover: {:.2}", asset_turnover);
+    {
+        let result = format!("Asset Turnover = {:.2}", asset_turnover);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn valuation_ratios_menu() {
@@ -447,6 +495,11 @@ fn run_price_to_earnings_ratio() {
 
     let pte = p_t_e(share_price, earnings_per_share);
     println!("Price to Earnings (P/E) Ratio: {:.2}", pte);
+    {
+        let result = format!("Price to Earnings Ratio = {:.2}", pte);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_price_to_book_ratio() {
@@ -457,6 +510,11 @@ fn run_price_to_book_ratio() {
 
     let ptb = p_t_b(share_price, book_value_per_share);
     println!("Price to Book (P/B) Ratio: {:.2}", ptb);
+    {
+        let result = format!("Price to Book Ratio = {:.2}", ptb);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_dividend_yield() {
@@ -467,6 +525,11 @@ fn run_dividend_yield() {
 
     let div_yield = div_y(annual_dividends_per_share, share_price);
     println!("Dividend Yield: {:.2}", div_yield);
+    {
+        let result = format!("Dividend Yield = {:.2}", div_yield);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn options_menu() {
@@ -516,8 +579,12 @@ fn run_bsm() {
     println!("Put Price: {:.2}", put_price);
     println!("N(d1): {:.2}", nd1);
     println!("N(d2): {:.2}", nd2);
+    {
+        let result = format!("BSM Call Price = {:.2}, Put Price = {:.2}", call_price, put_price);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
-
 
 fn time_value_of_money_menu() {
     clear_terminal();
@@ -551,6 +618,11 @@ fn run_xnpv() {
 
     let npv = xnpv(cashflows_ref, discount_rate);
     println!("XNPV: {:.2}", npv);
+    {
+        let result = format!("XNPV = {:.2}", npv);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_xirr() {
@@ -561,6 +633,11 @@ fn run_xirr() {
 
     let irr = xirr(cashflows_ref);
     println!("XIRR: {:.6}", irr);
+    {
+        let result = format!("XIRR = {:.6}", irr);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn get_cashflows() -> Vec<(f64, String)> {
@@ -580,7 +657,6 @@ fn get_cashflows() -> Vec<(f64, String)> {
     }
     cashflows
 }
-
 
 fn build_ups_menu() {
     clear_terminal();
@@ -624,6 +700,11 @@ fn run_fcff_ni() {
 
     let fcff = fcff_ni(net_income, non_cash_charges, interest, tax_rate, capex, change_in_working_capital);
     println!("FCFF using Net Income: {:.2}", fcff);
+    {
+        let result = format!("FCFF using Net Income = {:.2}", fcff);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_fcff_cfo() {
@@ -638,6 +719,11 @@ fn run_fcff_cfo() {
 
     let fcff = fcff_cfo(cfo, interest_expense, tax_rate, capex);
     println!("FCFF using CFO: {:.2}", fcff);
+    {
+        let result = format!("FCFF using CFO = {:.2}", fcff);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_fcff_ebit() {
@@ -654,6 +740,11 @@ fn run_fcff_ebit() {
 
     let fcff = fcff_ebit(ebit, tax_rate, depreciation, capex, change_in_working_capital);
     println!("FCFF using EBIT: {:.2}", fcff);
+    {
+        let result = format!("FCFF using EBIT = {:.2}", fcff);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_fcff_ebitda() {
@@ -670,8 +761,12 @@ fn run_fcff_ebitda() {
 
     let fcff = fcff_ebitda(ebitda, tax_rate, depreciation, capex, change_in_working_capital);
     println!("FCFF using EBITDA: {:.2}", fcff);
+    {
+        let result = format!("FCFF using EBITDA = {:.2}", fcff);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
-
 
 fn wacc_menu() {
     clear_terminal();
@@ -721,6 +816,11 @@ fn run_wacc_coe() {
 
     let wacc = wacc_coe(coe, we, tax_rate, cod, wd, cop, wp);
     println!("WACC using Cost of Equity: {:.2}", wacc);
+    {
+        let result = format!("WACC using Cost of Equity = {:.2}", wacc);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_coe() {
@@ -733,6 +833,11 @@ fn run_coe() {
 
     let coe_value = coe(rfr, equity_beta, mrp);
     println!("Cost of Equity (COE): {:.2}", coe_value);
+    {
+        let result = format!("Cost of Equity = {:.2}", coe_value);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_wacc_beta() {
@@ -757,6 +862,11 @@ fn run_wacc_beta() {
 
     let wacc = wacc_beta(equity_beta, rfr, mrp, we, tax_rate, cod, wd, cop, wp);
     println!("WACC using Equity Beta: {:.2}", wacc);
+    {
+        let result = format!("WACC using Equity Beta = {:.2}", wacc);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_mrp() {
@@ -767,6 +877,11 @@ fn run_mrp() {
 
     let mrp_value = mrp(equity_market_return, rfr);
     println!("Market Risk Premium (MRP): {:.2}", mrp_value);
+    {
+        let result = format!("Market Risk Premium = {:.2}", mrp_value);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_equity_beta() {
@@ -781,6 +896,11 @@ fn run_equity_beta() {
 
     let equity_beta_value = equity_beta(equity, debt, asset_beta_value, tax_rate);
     println!("Equity Beta: {:.2}", equity_beta_value);
+    {
+        let result = format!("Equity Beta = {:.2}", equity_beta_value);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn run_asset_beta() {
@@ -795,6 +915,11 @@ fn run_asset_beta() {
 
     let asset_beta_value = asset_beta(equity, debt, equity_beta_value, tax_rate);
     println!("Asset Beta: {:.2}", asset_beta_value);
+    {
+        let result = format!("Asset Beta = {:.2}", asset_beta_value);
+        *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+        HISTORY.lock().unwrap().push(result);
+    }
 }
 
 fn valuation_menu() {
@@ -828,7 +953,12 @@ fn run_ggm_p1() {
     let growth_rate = get_user_input().trim().parse::<f64>().unwrap();
 
     match ggm_p1(cashflow_0, required_rate_of_return, growth_rate) {
-        Some(value) => println!("Valuation using GGM One Phase: {:.2}", value),
+        Some(value) => {
+            println!("Valuation using GGM One Phase: {:.2}", value);
+            let result = format!("GGM One Phase Valuation = {:.2}", value);
+            *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+            HISTORY.lock().unwrap().push(result);
+        },
         None => println!("Invalid input: Required rate of return must be greater than growth rate."),
     }
 }
@@ -846,9 +976,15 @@ fn run_ggm_p2() {
     let periods = get_user_input().trim().parse::<u32>().unwrap();
 
     match ggm_p2(cashflow_0, required_rate_of_return, growth_rate_1, growth_rate_2, periods) {
-        Some(value) => println!("Valuation using GGM Two Phase: {:.2}", value),
+        Some(value) => {
+            println!("Valuation using GGM Two Phase: {:.2}", value);
+            let result = format!("GGM Two Phase Valuation = {:.2}", value);
+            *LAST_RESULT.lock().unwrap() = format!("Last: {}", result);
+            HISTORY.lock().unwrap().push(result);
+        },
         None => println!("Invalid input: Required rate of return must be greater than second phase growth rate."),
     }
 }
 
 // end of file
+
